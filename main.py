@@ -1,8 +1,8 @@
 import json
 import math as m
 
-E_CONSTRAINT = 1000000
-# E_CONSTRAINT = 287932
+# E_CONSTRAINT = 1000000
+E_CONSTRAINT = 287932
 
 with open('jsonFiles/Coord.json') as coord:
     coord_data = json.load(coord)
@@ -22,9 +22,9 @@ def uniform_CS(start_node, end_node):
     answer = 10 ** 10
     # Utilise priority queue
     queue = []
-    # insert the starting index. (dist, node, parent_node)
+    # insert the starting index. (dist, node, parent_node, energy_consumption)
     # Dist from start node to start node is 0
-    queue.append([0, str(start_node), str(-1)])
+    queue.append([0, str(start_node), str(-1), 0])
     # map to store visited nodes
     visited = {}
 
@@ -53,7 +53,7 @@ def uniform_CS(start_node, end_node):
                     while current != '1':
                         current = visited[current]
                         path.append(current)
-                    return answer, path
+                    return answer, path, p[3]
 
         # Expand adjacent nodes. Make sure nodes expanded not in visited list
         for i in g_data[str(p[1])]:
@@ -63,7 +63,13 @@ def uniform_CS(start_node, end_node):
                     distance = dist_data[str(p[1]) + ',' + str(i)]
                 except:
                     distance = dist_data[str(i) + ',' + str(p[1])]
-                queue.append([(p[0] + distance), str(i), p[1]])
+
+                try:
+                    energy = cost_data[str(p[1]) + ',' + str(i)]
+                except:
+                    energy = cost_data[str(i) + ',' + str(p[1])]
+
+                queue.append([(p[0] + distance), str(i), p[1], (p[3] + energy)])
 
         # mark current node as visited
         visited[p[1]] = p[2]
@@ -77,7 +83,7 @@ def uniform_CS(start_node, end_node):
     while current != '1':
         current = visited[current]
         path.append(current)
-    return answer, path
+    return answer, path, p[3]
 
 
 ''' To solve task 2 - using Uniform cost search with constraint'''
@@ -139,13 +145,13 @@ def uniform_CS_with_constraint(start_node, end_node, constraint):
 
                     queue.append([(p[0] + distance), str(i), (p[2] + energy), p[1]])
 
-        # mark current node as visited
-        visited[p[1]] = p[3]
+            # only mark current node as visited if it was considered within energy constraint
+            visited[p[1]] = p[3]
     # if no other node in the queue, no need to check any further. return answer
     # But if answer is still original value, return no -1
     if answer == 10 ** 10:
         # If no viable answer return -1
-        return -1, -1
+        return -1, -1, -1
     visited[p[1]] = p[3]
     path = [p[1]]
     current = p[1]
@@ -222,13 +228,13 @@ def a_star_search(start_node, end_node, constraint):
 
                     queue.append([(find_euclidean_distance(i, p[1]) + distance), str(i), (p[2] + energy), (p[3] + distance), p[1]])
 
-        # mark current node as visited
-        visited[p[1]] = p[4]
+            # mark current node as visited
+            visited[p[1]] = p[4]
     # if no other node in the queue, no need to check any further. return answer
     # But if answer is still original value, return no -1
     if answer == 10 ** 10:
         # If no viable answer return -1
-        return -1, -1
+        return -1, -1, -1
     visited[p[1]] = p[4]
     path = [p[1]]
     current = p[1]
@@ -238,7 +244,7 @@ def a_star_search(start_node, end_node, constraint):
     return answer, p[2], path
 
 
-task1_dist, task1_path = uniform_CS(1, 50)
+task1_dist, task1_path, task1_energy = uniform_CS(1, 50)
 path1 = ""
 path1 = path1+task1_path.pop(-1)
 for i in reversed(task1_path):
@@ -246,31 +252,32 @@ for i in reversed(task1_path):
 print("Beginning task 1...")
 print("Shortest path: " + path1)
 print("Shortest distance: " + str(task1_dist))
+print("Total Energy Cost: " + str(task1_energy))
 
 task2_dist, task2_energy, task2_path = uniform_CS_with_constraint(1, 50, E_CONSTRAINT)
-path2 = ""
-path2 = path2+task2_path.pop(-1)
-for i in reversed(task2_path):
-    path2 = path2+"->"+i
 print("")
 print("Beginning task 2...")
 if task2_dist == -1:
     print("This is impossible as energy cost exceeded for all possible paths")
 else:
+    path2 = ""
+    path2 = path2 + task2_path.pop(-1)
+    for i in reversed(task2_path):
+        path2 = path2 + "->" + i
     print("Shortest path: " + path2)
     print("Shortest distance: " + str(task2_dist))
     print("Total Energy Cost: " + str(task2_energy))
 
 task3_dist, task3_energy, task3_path = a_star_search(1, 50, E_CONSTRAINT)
-path3 = ""
-path3 = path3+task3_path.pop(-1)
-for i in reversed(task3_path):
-    path3 = path3+"->"+i
 print("")
 print("Beginning task 3...")
-print("Shortest path: " + path3)
 if task3_dist == -1:
     print("This is impossible as energy cost exceeded for all possible paths")
 else:
+    path3 = ""
+    path3 = path3 + task3_path.pop(-1)
+    for i in reversed(task3_path):
+        path3 = path3 + "->" + i
+    print("Shortest path: " + path3)
     print("Shortest distance: " + str(task3_dist))
     print("Total Energy Cost: " + str(task3_energy))
