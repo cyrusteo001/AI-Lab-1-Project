@@ -1,8 +1,9 @@
 import json
 import math as m
 
-# E_CONSTRAINT = 1000000
+ERROR_MSG = "This is impossible as energy cost exceeded for all possible paths"
 E_CONSTRAINT = 287932
+# E_CONSTRAINT = 10000000
 
 with open('jsonFiles/Coord.json') as coord:
     coord_data = json.load(coord)
@@ -17,7 +18,7 @@ with open('jsonFiles/G.json') as g:
 
 
 # To get the path, in the visited dictionary, key = current node and value = parent node. Then work backwards to find path taken
-def uniform_CS(start_node, end_node):
+def task_1(start_node, end_node):
     # Set answer to a very large number first
     answer = 10 ** 10
     # Utilise priority queue
@@ -53,6 +54,7 @@ def uniform_CS(start_node, end_node):
                     while current != '1':
                         current = visited[current]
                         path.append(current)
+                    print("Number of nodes explored = " + str(len(visited)))
                     return answer, path, p[3]
 
         # Expand adjacent nodes. Make sure nodes expanded not in visited list
@@ -76,13 +78,15 @@ def uniform_CS(start_node, end_node):
     # if no other node in the queue, no need to check any further. return answer
     # But if answer is still original value, return no -1
     if answer == 10 ** 10:
-        return -1
+        print("Number of nodes explored = " + str(len(visited)))
+        return -1, -1, -1
     visited[p[1]] = p[2]
     path = [p[1]]
     current = p[1]
     while current != '1':
         current = visited[current]
         path.append(current)
+    print("Number of nodes explored = " + str(len(visited)))
     return answer, path, p[3]
 
 
@@ -90,7 +94,7 @@ def uniform_CS(start_node, end_node):
 
 
 # Reuse UCS from task 1 but with added energy constraint
-def uniform_CS_with_constraint(start_node, end_node, constraint):
+def task_2(start_node, end_node, constraint):
     # Set answer to a very large number first
     answer = 10 ** 10
     # Utilise priority queue
@@ -106,12 +110,22 @@ def uniform_CS_with_constraint(start_node, end_node, constraint):
         # get the top element of the queue. Sort by cost queue[0] and pop the one with the smallest cost
         queue = sorted(queue)
         p = queue.pop(0)
-        # Check if the energy consumption at this node is already exceeded:
+        # Utilising constraint propagation...
+        # An answer will be achieved but it is not the fastest possible answer. To find the fastest possible, we should
+        # find all possible simple paths and then checking if the energy consumption exceeds the constraint then. This
+        # way all possible paths will be considered. However this will lead to a very long computational time of approx
+        # a few hours. This is inefficient and infeasible
+        # The correct answer should be:
+        # Shortest path: 1->1363->1358->1357->1356->1276->1273->1277->1269->1267->1268->1284->1283->1282->1255->1253->1260->1259->1249->1246->963->964->962->1002->952->1000->998->994->995->996->987->988->979->980->969->977->989->990->991->2465->2466->2384->2382->2385->2379->2380->2445->2444->2405->2406->2398->2395->2397->2142->2141->2125->2126->2082->2080->2071->1979->1975->1967->1966->1974->1973->1971->1970->1948->1937->1939->1935->1931->1934->1673->1675->1674->1837->1671->1828->1825->1817->1815->1634->1814->1813->1632->1631->1742->1741->1740->1739->1591->1689->1585->1584->1688->1579->1679->1677->104->5680->5418->5431->5425->5424->5422->5413->5412->5411->66->5392->5391->5388->5291->5278->5289->5290->5283->5284->5280->50
+        # Shortest distance: 150335.55441905273
+        # Total energy cost: 259087
         if p[2] < constraint:
             # check if the element is goal node
             if int(p[1]) == end_node:
-                # if the cost is less than current answer
+                # if the cost is less than current answer and energy is not exceeded
                 if answer > p[0]:
+                # Correct answer should be to check constraint consideration only after goal node has been reached but will take hours
+                # if answer > p[0] and p[2] < constraint:
                     answer = p[0]
                     # To speed things up, check whether the cost of this node is less than all other nodes in the queue
                     # If yes, we can immediately return answer and not check the others
@@ -127,6 +141,7 @@ def uniform_CS_with_constraint(start_node, end_node, constraint):
                         while current != '1':
                             current = visited[current]
                             path.append(current)
+                        print("Number of nodes explored = " + str(len(visited)))
                         return answer, p[2], path
 
             # Expand adjacent nodes. Make sure nodes expanded not in visited list
@@ -151,6 +166,7 @@ def uniform_CS_with_constraint(start_node, end_node, constraint):
     # But if answer is still original value, return no -1
     if answer == 10 ** 10:
         # If no viable answer return -1
+        print("Number of nodes explored = " + str(len(visited)))
         return -1, -1, -1
     visited[p[1]] = p[3]
     path = [p[1]]
@@ -158,6 +174,7 @@ def uniform_CS_with_constraint(start_node, end_node, constraint):
     while current != '1':
         current = visited[current]
         path.append(current)
+    print("Number of nodes explored = " + str(len(visited)))
     return answer, p[2], path
 
 
@@ -172,7 +189,7 @@ def find_euclidean_distance(node_1, node_2):
 
 
 # Reuse UCS from task 2, but with added heuristic of straight line distance of evaluated points
-def a_star_search(start_node, end_node, constraint):
+def task_3(start_node, end_node, constraint):
     # Set answer to a very large number first
     answer = 10 ** 10
     # Utilise priority queue
@@ -189,11 +206,15 @@ def a_star_search(start_node, end_node, constraint):
         # get the top element of the queue. Sort by cost queue[0] and pop the one with the smallest cost
         queue = sorted(queue)
         p = queue.pop(0)
-        # Check if the energy consumption at this node is already exceeded:
+        # Utilising constraint propagation...
+        # An answer will be achieved but it is not the fastest possible answer. To find the fastest possible, we should
+        # find all possible simple paths and then checking if the energy consumption exceeds the constraint then. This
+        # way all possible paths will be considered. However this will lead to a very long computational time of approx
+        # a few hours. This is inefficient and infeasible
         if p[2] < constraint:
             # check if the element is goal node
             if int(p[1]) == end_node:
-                # if the cost is less than current answer
+                # if the cost is less than current answer and less than energy constraint
                 if answer > p[3]:
                     answer = p[3]
                     # To speed things up, check whether the evaluation cost of this node is less than all other nodes
@@ -210,6 +231,7 @@ def a_star_search(start_node, end_node, constraint):
                         while current != '1':
                             current = visited[current]
                             path.append(current)
+                        print("Number of nodes explored = " + str(len(visited)))
                         return answer, p[2], path
 
             # Expand adjacent nodes. Make sure nodes expanded not in visited list
@@ -226,7 +248,7 @@ def a_star_search(start_node, end_node, constraint):
                     except:
                         energy = cost_data[str(i) + ',' + str(p[1])]
 
-                    queue.append([(find_euclidean_distance(i, p[1]) + distance), str(i), (p[2] + energy), (p[3] + distance), p[1]])
+                    queue.append([(find_euclidean_distance(str(i), str(end_node)) + (p[3] + distance)), str(i), (p[2] + energy), (p[3] + distance), p[1]])
 
             # mark current node as visited
             visited[p[1]] = p[4]
@@ -234,6 +256,7 @@ def a_star_search(start_node, end_node, constraint):
     # But if answer is still original value, return no -1
     if answer == 10 ** 10:
         # If no viable answer return -1
+        print("Number of nodes explored = " + str(len(visited)))
         return -1, -1, -1
     visited[p[1]] = p[4]
     path = [p[1]]
@@ -241,24 +264,26 @@ def a_star_search(start_node, end_node, constraint):
     while current != '1':
         current = visited[current]
         path.append(current)
+    print("Number of nodes explored = " + str(len(visited)))
     return answer, p[2], path
 
-
-task1_dist, task1_path, task1_energy = uniform_CS(1, 50)
+print("Beginning task 1...")
+task1_dist, task1_path, task1_energy = task_1(1, 50)
+if task1_dist == -1:
+    print(ERROR_MSG)
 path1 = ""
 path1 = path1+task1_path.pop(-1)
 for i in reversed(task1_path):
     path1 = path1+"->"+i
-print("Beginning task 1...")
 print("Shortest path: " + path1)
 print("Shortest distance: " + str(task1_dist))
 print("Total Energy Cost: " + str(task1_energy))
 
-task2_dist, task2_energy, task2_path = uniform_CS_with_constraint(1, 50, E_CONSTRAINT)
 print("")
 print("Beginning task 2...")
+task2_dist, task2_energy, task2_path = task_2(1, 50, E_CONSTRAINT)
 if task2_dist == -1:
-    print("This is impossible as energy cost exceeded for all possible paths")
+    print(ERROR_MSG)
 else:
     path2 = ""
     path2 = path2 + task2_path.pop(-1)
@@ -268,11 +293,11 @@ else:
     print("Shortest distance: " + str(task2_dist))
     print("Total Energy Cost: " + str(task2_energy))
 
-task3_dist, task3_energy, task3_path = a_star_search(1, 50, E_CONSTRAINT)
 print("")
 print("Beginning task 3...")
+task3_dist, task3_energy, task3_path = task_3(1, 50, E_CONSTRAINT)
 if task3_dist == -1:
-    print("This is impossible as energy cost exceeded for all possible paths")
+    print(ERROR_MSG)
 else:
     path3 = ""
     path3 = path3 + task3_path.pop(-1)
